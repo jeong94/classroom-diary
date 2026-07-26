@@ -4,17 +4,27 @@ import { getTodayFormatted, getTodayQuote } from '../utils/dateUtils';
 import { StudentProfileModal } from '../components/profile/StudentProfileModal';
 import { LoginModal } from '../components/auth/LoginModal';
 import type { Student } from '../types';
-import { Sparkles, ArrowRight, Award, UserCheck } from 'lucide-react';
+import { Sparkles, ArrowRight, Award, UserCheck, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const LandingPage: React.FC = () => {
-  const { students, selectStudent, getStudentStats, studentBadges } = useClass();
+  const { students, tryAccessStudent, getStudentStats, studentBadges, currentTeacher, selectedStudent } = useClass();
 
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [profileStudent, setProfileStudent] = useState<Student | null>(null);
+  const [accessAlert, setAccessAlert] = useState<string | null>(null);
+
+  const handleStudentCardClick = (student: Student) => {
+    const check = tryAccessStudent(student);
+    if (!check.allowed) {
+      setAccessAlert(check.message || '본인의 성장기록장만 접근할 수 있습니다. 먼저 로그인해주세요!');
+      setShowLoginModal(true);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+      {/* Hero Banner */}
       <div className="relative bg-gradient-to-r from-amber-200 via-orange-100 to-rose-200 rounded-3xl p-8 sm:p-12 shadow-xl border border-amber-300/40 overflow-hidden">
         <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 bg-yellow-300/30 rounded-full blur-3xl pointer-events-none" />
         
@@ -42,13 +52,30 @@ export const LandingPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Access Alert Toast */}
+      {accessAlert && (
+        <div className="bg-rose-50 border-2 border-rose-200 text-rose-900 px-5 py-3 rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-between shadow-sm max-w-2xl mx-auto">
+          <div className="flex items-center gap-2">
+            <Lock className="w-4 h-4 text-rose-600" />
+            <span>{accessAlert}</span>
+          </div>
+          <button
+            onClick={() => setAccessAlert(null)}
+            className="text-xs text-rose-700 underline font-bold"
+          >
+            닫기
+          </button>
+        </div>
+      )}
+
+      {/* Main Login Selection Boxes */}
       <div className="space-y-4">
         <div className="text-center max-w-xl mx-auto space-y-1">
           <span className="bg-amber-100 text-amber-900 text-xs font-extrabold px-3 py-1 rounded-full border border-amber-300">
-            3단계: 역할별 접속 선택
+            신분별 입장 선택
           </span>
           <h2 className="text-2xl sm:text-3xl font-black text-slate-900">어떤 신분으로 접속하시나요?</h2>
-          <p className="text-xs text-slate-500 font-bold">학생은 초대코드+실명으로, 교사는 구글 계정으로 로그인합니다.</p>
+          <p className="text-xs text-slate-500 font-bold">학생은 초대코드+실명으로, 교사는 Google 계정으로 로그인합니다.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
@@ -95,7 +122,7 @@ export const LandingPage: React.FC = () => {
               </span>
               <h3 className="text-2xl font-black">교사로 접속하기</h3>
               <p className="text-xs text-purple-100 font-medium leading-relaxed">
-                <b>Google 계정으로 로그인</b> 후 선생님 실명, 학교명, 학년 (1~6학년), 반 (1~10반)을 입력합니다. 최종 관리자의 승인 시 학반 전담 관리자 권한을 취득합니다.
+                <b>Google 계정으로 로그인</b> 후 선생님 실명, 학교명, 학년 (1~6학년), 반 (1~10반)을 입력하여 학반 관리자 권한을 가집니다.
               </p>
             </div>
 
@@ -110,13 +137,14 @@ export const LandingPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Student Roster Overview (Card Protection Enabled) */}
       <div className="space-y-4 pt-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
             <UserCheck className="w-5 h-5 text-amber-500" />
-            <span>현재 등록된 학급 학생 명부 ({students.length}명)</span>
+            <span>학급 학생 명부 ({students.length}명)</span>
           </h3>
-          <span className="text-xs text-slate-400">학생 카드를 클릭해도 빠른 데모 입장이 가능합니다.</span>
+          <span className="text-xs text-slate-400">🔒 본인 또는 선생님만 학생의 개인 성장기록장에 입장할 수 있습니다.</span>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
@@ -129,7 +157,7 @@ export const LandingPage: React.FC = () => {
                 key={student.id}
                 whileHover={{ y: -6, scale: 1.02 }}
                 className="bg-white rounded-3xl p-5 border border-amber-100 shadow-soft hover:shadow-soft-hover transition-all flex flex-col justify-between group cursor-pointer relative overflow-hidden"
-                onClick={() => selectStudent(student)}
+                onClick={() => handleStudentCardClick(student)}
               >
                 <div>
                   <div className="flex items-center justify-between mb-3">
@@ -165,7 +193,11 @@ export const LandingPage: React.FC = () => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setProfileStudent(student);
+                      if (currentTeacher || (selectedStudent && selectedStudent.id === student.id)) {
+                        setProfileStudent(student);
+                      } else {
+                        handleStudentCardClick(student);
+                      }
                     }}
                     className="text-amber-600 hover:text-amber-800 font-bold underline"
                   >

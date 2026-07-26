@@ -63,10 +63,7 @@ export const Header: React.FC = () => {
           {currentTeacher && (
             <div className="flex items-center gap-2 bg-purple-50 border border-purple-200 px-3 py-1 rounded-full text-xs font-bold text-purple-900 shadow-2xs">
               <GraduationCap className="w-4 h-4 text-purple-600" />
-              <span>{currentTeacher.isSuperAdmin ? '👑 최종관리자' : `${currentTeacher.schoolName} ${currentTeacher.grade}-${currentTeacher.classNum} ${currentTeacher.name}`}</span>
-              {currentTeacher.status === 'pending' && (
-                <span className="text-[10px] bg-amber-400 text-amber-950 px-1.5 py-0.2 rounded-md">승인대기</span>
-              )}
+              <span>{`${currentTeacher.schoolName} ${currentTeacher.grade}-${currentTeacher.classNum} ${currentTeacher.name}`}</span>
             </div>
           )}
 

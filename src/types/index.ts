@@ -1,6 +1,5 @@
 /**
  * Data structures for '우리반 성장기록장' (Classroom Growth Tracker)
- * Multi-role Authentication, Class Invite Code, Super Admin Approval, and Student Activity History
  */
 
 export type EmotionType = 'happy' | 'joy' | 'calm' | 'neutral' | 'sad' | 'angry' | 'sleepy';
@@ -20,8 +19,7 @@ export interface TeacherUser {
   schoolName: string;
   grade: number; // 1 ~ 6
   classNum: number; // 1 ~ 10
-  status: 'pending' | 'approved' | 'rejected'; // 최종관리자 승인 상태
-  isSuperAdmin?: boolean; // 최종 관리자 여부
+  status: 'approved';
   inviteCode: string; // 학반 6자리 고유 초대 코드
   createdAt: string;
 }

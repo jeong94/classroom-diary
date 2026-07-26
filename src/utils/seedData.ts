@@ -1,18 +1,16 @@
 import type { Student, Duty, Badge, ReadingLog, EmotionRecord, DutyCompletion, WeeklyGoal, PraiseCard, TeacherNote, StudentBadge, TeacherUser, SchoolClass } from '../types';
 import { getTodayYMD, getMondayOfWeek } from './dateUtils';
 
-export const SUPER_ADMIN_EMAIL = 'admin@growth.edu';
 export const DEFAULT_INVITE_CODE = 'CLASS61';
 
-export const DEFAULT_SUPER_ADMIN: TeacherUser = {
-  id: 'tch-super-admin',
-  email: SUPER_ADMIN_EMAIL,
-  name: '최종관리자 (개발자)',
+export const DEFAULT_TEACHER: TeacherUser = {
+  id: 'tch-61',
+  email: 'teacher@growth.edu',
+  name: '김담임 선생님',
   schoolName: '중앙초등학교',
   grade: 6,
   classNum: 1,
   status: 'approved',
-  isSuperAdmin: true,
   inviteCode: DEFAULT_INVITE_CODE,
   createdAt: '2026-03-01',
 };
@@ -23,8 +21,8 @@ export const DEFAULT_CLASSES: SchoolClass[] = [
     schoolName: '중앙초등학교',
     grade: 6,
     classNum: 1,
-    teacherId: 'tch-super-admin',
-    teacherName: '최종관리자 (개발자)',
+    teacherId: 'tch-61',
+    teacherName: '김담임 선생님',
     inviteCode: DEFAULT_INVITE_CODE,
     createdAt: '2026-03-01',
   },
@@ -55,27 +53,14 @@ export const DEFAULT_BADGES: Badge[] = [
   { id: 'badge-caring', name: '배려왕', icon: '🤝', description: '친구들에게 칭찬 카드를 3회 이상 보낸 친절한 학생', criteria: '칭찬 3회 작성', category: 'praise' },
   { id: 'badge-goal', name: '목표달성왕', icon: '🌟', description: '주간 목표를 3주 연속 달성한 의지 강한 학생', criteria: '주간목표 3회 완료', category: 'goal' },
   { id: 'badge-kindness', name: '친절왕', icon: '😊', description: '친구들로부터 칭찬을 5회 이상 받은 따뜻한 학생', criteria: '칭찬 5회 수신', category: 'praise' },
-  { id: 'badge-duty', name: '성실왕', icon: '🎖️', description: '1인 1역 과제를 10회 이상 성실히 수행한 학생', criteria: '1인1역 10회 완료', category: 'duty' },
+  { id: 'badge-duty', name: '성실왕', icon: '🎖️', description: '1인 1역 과제를 10회 이상 수행한 학생', criteria: '1인1역 10회 완료', category: 'duty' },
 ];
 
 export function getInitialSeedData() {
   const today = getTodayYMD();
   const monday = getMondayOfWeek();
 
-  const teachers: TeacherUser[] = [
-    DEFAULT_SUPER_ADMIN,
-    {
-      id: 'tch-2',
-      email: 'teacher2@growth.edu',
-      name: '홍길동 교사',
-      schoolName: '서울초등학교',
-      grade: 5,
-      classNum: 3,
-      status: 'pending', // 대기 중인 교사 예시
-      inviteCode: 'CLASS53',
-      createdAt: '2026-03-05',
-    }
-  ];
+  const teachers: TeacherUser[] = [DEFAULT_TEACHER];
 
   const readingLogs: ReadingLog[] = [
     { id: 'rl-1', studentId: 'std-1', classInviteCode: DEFAULT_INVITE_CODE, bookTitle: '해리 포터와 마법사의 돌', date: '2026-07-20', pagesRead: 120, rating: 5, review: '마법 학교 이야기가 너무 흥미진진해서 손에서 뗄 수가 없었다.', createdAt: '2026-07-20' },

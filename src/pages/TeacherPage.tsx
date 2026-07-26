@@ -5,26 +5,19 @@ import { TeacherNotes } from '../components/teacher/TeacherNotes';
 import { BadgeManager } from '../components/teacher/BadgeManager';
 import { StatsView } from '../components/teacher/StatsView';
 import { DutyManager } from '../components/teacher/DutyManager';
-import { SuperAdminDashboard } from '../components/teacher/SuperAdminDashboard';
 import { StudentInviteManager } from '../components/teacher/StudentInviteManager';
 import { StudentProfileModal } from '../components/profile/StudentProfileModal';
 import type { Student } from '../types';
-import { LayoutDashboard, Users, Lock, Award, Trophy, Settings, Key, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, Users, Lock, Award, Trophy, Settings, Key } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const TeacherPage: React.FC = () => {
-  const { currentTeacher, students, getStudentStats, studentBadges } = useClass();
+  const { students, getStudentStats, studentBadges } = useClass();
 
-  const isSuperAdmin = currentTeacher?.isSuperAdmin;
-  const isPending = currentTeacher?.status === 'pending';
-
-  const [activeTab, setActiveTab] = useState<string>(
-    isSuperAdmin ? 'superadmin' : 'dashboard'
-  );
+  const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [profileStudent, setProfileStudent] = useState<Student | null>(null);
 
   const tabs = [
-    ...(isSuperAdmin ? [{ id: 'superadmin', label: '👑 최종 관리자 센터', icon: ShieldCheck }] : []),
     { id: 'dashboard', label: '학급 대시보드', icon: LayoutDashboard },
     { id: 'invite', label: '학생 초대 (초대코드)', icon: Key },
     { id: 'students', label: '학생 목록', icon: Users },
@@ -34,25 +27,9 @@ export const TeacherPage: React.FC = () => {
     { id: 'settings', label: '학급 설정', icon: Settings },
   ];
 
-  if (isPending) {
-    return (
-      <div className="max-w-3xl mx-auto px-4 py-16 text-center space-y-6">
-        <div className="bg-amber-50 border-2 border-amber-300 rounded-3xl p-8 shadow-lg space-y-4">
-          <div className="w-16 h-16 bg-amber-200 rounded-full flex items-center justify-center text-3xl mx-auto">
-            ⏳
-          </div>
-          <h2 className="text-2xl font-black text-amber-950">최종 관리자 승인 대기 중</h2>
-          <p className="text-sm text-slate-700 font-bold leading-relaxed">
-            {currentTeacher?.schoolName} {currentTeacher?.grade}학년 {currentTeacher?.classNum}반 ({currentTeacher?.name} 선생님)의 가입 신청이 성공적으로 제출되었습니다.<br/>
-            최종 관리자(admin@growth.edu)의 승인 후 학반 성장기록장 관리가 가능합니다.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      {/* Navigation Tabs */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none border-b border-purple-100">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -75,7 +52,6 @@ export const TeacherPage: React.FC = () => {
       </div>
 
       <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
-        {activeTab === 'superadmin' && <SuperAdminDashboard />}
         {activeTab === 'dashboard' && <ClassDashboard />}
         {activeTab === 'invite' && <StudentInviteManager />}
 

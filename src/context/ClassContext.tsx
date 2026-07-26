@@ -4,21 +4,20 @@ import type {
   WeeklyGoal, PraiseCard, TeacherNote, StudentBadge, StudentStats,
   TeacherUser, SchoolClass
 } from '../types';
-import { getInitialSeedData, SUPER_ADMIN_EMAIL, DEFAULT_INVITE_CODE } from '../utils/seedData';
+import { getInitialSeedData, DEFAULT_INVITE_CODE } from '../utils/seedData';
 import { getTodayYMD, getMondayOfWeek } from '../utils/dateUtils';
 import confetti from 'canvas-confetti';
 
-const STORAGE_KEY = 'GROWTH_TRACKER_V2_DATA';
+const STORAGE_KEY = 'GROWTH_TRACKER_V3_DATA';
 
 export interface ViewState {
-  mode: 'landing' | 'student' | 'teacher' | 'superadmin';
+  mode: 'landing' | 'student' | 'teacher';
   student?: Student | null;
-  teacherTab?: string;
 }
 
 interface ClassContextType {
-  mode: 'landing' | 'student' | 'teacher' | 'superadmin';
-  setMode: (mode: 'landing' | 'student' | 'teacher' | 'superadmin') => void;
+  mode: 'landing' | 'student' | 'teacher';
+  setMode: (mode: 'landing' | 'student' | 'teacher') => void;
   selectedStudent: Student | null;
   currentTeacher: TeacherUser | null;
   activeInviteCode: string;
@@ -36,18 +35,15 @@ interface ClassContextType {
   teacherNotes: TeacherNote[];
   studentBadges: StudentBadge[];
 
-  // Navigation History (7단계 & 8단계)
   navHistory: ViewState[];
   pushViewState: (state: ViewState) => void;
   goBack: () => void;
   logout: () => void;
 
-  // Actions
   loginAsTeacherGoogle: (email: string, name: string, schoolName: string, grade: number, classNum: number) => TeacherUser;
-  approveTeacher: (teacherId: string) => void;
-  rejectTeacher: (teacherId: string) => void;
   loginAsStudentWithCode: (grade: number, classNum: number, realName: string, inviteCode: string) => { success: boolean; message?: string };
   selectStudent: (student: Student | null) => void;
+  tryAccessStudent: (student: Student) => { allowed: boolean; message?: string };
 
   addReadingLog: (bookTitle: string, date: string, pagesRead: number, rating: number, review: string) => void;
   addEmotionRecord: (emotion: EmotionRecord['emotion'], note: string, date?: string) => void;
@@ -66,12 +62,11 @@ interface ClassContextType {
 const ClassContext = createContext<ClassContextType | undefined>(undefined);
 
 export const ClassProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [mode, setModeState] = useState<'landing' | 'student' | 'teacher' | 'superadmin'>('landing');
+  const [mode, setModeState] = useState<'landing' | 'student' | 'teacher'>('landing');
   const [selectedStudent, setSelectedStudentState] = useState<Student | null>(null);
   const [currentTeacher, setCurrentTeacher] = useState<TeacherUser | null>(null);
   const [activeInviteCode, setActiveInviteCode] = useState<string>(DEFAULT_INVITE_CODE);
 
-  // Navigation Stack History
   const [navHistory, setNavHistory] = useState<ViewState[]>([{ mode: 'landing' }]);
 
   const [teachers, setTeachers] = useState<TeacherUser[]>([]);
@@ -154,7 +149,6 @@ export const ClassProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [teachers, schoolClasses, students, duties, badges, readingLogs, emotionRecords, dutyCompletions, weeklyGoals, praiseCards, teacherNotes, studentBadges]);
 
-  // Navigation History Stack Push & GoBack (7단계 & 8단계)
   const pushViewState = (nextState: ViewState) => {
     setNavHistory(prev => [...prev, nextState]);
     setModeState(nextState.mode);
@@ -187,7 +181,7 @@ export const ClassProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setNavHistory([{ mode: 'landing' }]);
   };
 
-  const setMode = (newMode: 'landing' | 'student' | 'teacher' | 'superadmin') => {
+  const setMode = (newMode: 'landing' | 'student' | 'teacher') => {
     pushViewState({ mode: newMode, student: selectedStudent });
   };
 
@@ -199,6 +193,25 @@ export const ClassProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  // Check if a user can open a student's card (Requirement #2: 본인꺼만 누를수 있게 해주고)
+  const tryAccessStudent = (student: Student): { allowed: boolean; message?: string } => {
+    // 1. If a teacher is logged in: teacher can view their students' profiles
+    if (currentTeacher) {
+      selectStudent(student);
+      return { allowed: true };
+    }
+    // 2. If student is logged in as this exact student: allowed
+    if (selectedStudent && selectedStudent.id === student.id) {
+      selectStudent(student);
+      return { allowed: true };
+    }
+    // 3. Otherwise, deny access to other students' personal space
+    return {
+      allowed: false,
+      message: `본인의 성장기록장만 접근할 수 있습니다. [${student.name}] 학생으로 로그인하시거나 초대 코드를 입력해주세요!`
+    };
+  };
+
   const triggerConfetti = () => {
     confetti({
       particleCount: 100,
@@ -208,19 +221,14 @@ export const ClassProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
   };
 
-  // Google Login simulation & registration for teachers
+  // Google Login for Teachers - Immediately creates/approves Teacher and Class (Requirement #3)
   const loginAsTeacherGoogle = (email: string, name: string, schoolName: string, grade: number, classNum: number): TeacherUser => {
-    const isSuperAdmin = email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
     const existing = teachers.find(t => t.email.toLowerCase() === email.toLowerCase());
 
     if (existing) {
       setCurrentTeacher(existing);
       setActiveInviteCode(existing.inviteCode);
-      if (existing.isSuperAdmin) {
-        pushViewState({ mode: 'superadmin' });
-      } else {
-        pushViewState({ mode: 'teacher' });
-      }
+      pushViewState({ mode: 'teacher' });
       return existing;
     }
 
@@ -232,61 +240,36 @@ export const ClassProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       schoolName,
       grade,
       classNum,
-      status: isSuperAdmin ? 'approved' : 'pending',
-      isSuperAdmin,
+      status: 'approved',
+      inviteCode,
+      createdAt: getTodayYMD(),
+    };
+
+    const newClass: SchoolClass = {
+      id: `cls-${Date.now()}`,
+      schoolName,
+      grade,
+      classNum,
+      teacherId: newTeacher.id,
+      teacherName: name,
       inviteCode,
       createdAt: getTodayYMD(),
     };
 
     setTeachers(prev => [...prev, newTeacher]);
+    setSchoolClasses(prev => [...prev, newClass]);
     setCurrentTeacher(newTeacher);
     setActiveInviteCode(inviteCode);
+    pushViewState({ mode: 'teacher' });
 
-    if (isSuperAdmin) {
-      pushViewState({ mode: 'superadmin' });
-    } else {
-      pushViewState({ mode: 'teacher' });
-    }
-
+    triggerConfetti();
     return newTeacher;
   };
 
-  // Super Admin approves teacher (5단계 & 6단계: 승인 시 학반 자동 생성됨!)
-  const approveTeacher = (teacherId: string) => {
-    const target = teachers.find(t => t.id === teacherId);
-    if (!target) return;
-
-    const updatedTeacher: TeacherUser = { ...target, status: 'approved' };
-    setTeachers(prev => prev.map(t => t.id === teacherId ? updatedTeacher : t));
-
-    // Automatically create SchoolClass (6단계)
-    const existingClass = schoolClasses.find(c => c.schoolName === target.schoolName && c.grade === target.grade && c.classNum === target.classNum);
-    if (!existingClass) {
-      const newClass: SchoolClass = {
-        id: `cls-${Date.now()}`,
-        schoolName: target.schoolName,
-        grade: target.grade,
-        classNum: target.classNum,
-        teacherId: target.id,
-        teacherName: target.name,
-        inviteCode: target.inviteCode,
-        createdAt: getTodayYMD(),
-      };
-      setSchoolClasses(prev => [...prev, newClass]);
-    }
-    triggerConfetti();
-  };
-
-  const rejectTeacher = (teacherId: string) => {
-    setTeachers(prev => prev.map(t => t.id === teacherId ? { ...t, status: 'rejected' } : t));
-  };
-
-  // Student Login with Real Name & Class Invite Code (1단계 & 3단계 & 5단계)
   const loginAsStudentWithCode = (grade: number, classNum: number, realName: string, inviteCode: string) => {
     const cleanCode = inviteCode.trim().toUpperCase();
     const targetClass = schoolClasses.find(c => c.inviteCode.toUpperCase() === cleanCode && c.grade === grade && c.classNum === classNum);
     
-    // Also check default invite code CLASS61
     const isValidCode = targetClass || cleanCode === DEFAULT_INVITE_CODE;
 
     if (!isValidCode && schoolClasses.length > 0) {
@@ -303,7 +286,6 @@ export const ClassProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return { success: true };
     }
 
-    // Auto create new student record under real name
     const newStudent: Student = {
       id: `std-${Date.now()}`,
       name: realName.trim(),
@@ -319,7 +301,6 @@ export const ClassProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return { success: true };
   };
 
-  // Auto Badge Check
   const checkAutoBadges = (studentId: string) => {
     const sLogs = readingLogs.filter(l => l.studentId === studentId);
     const sDuties = dutyCompletions.filter(d => d.studentId === studentId);
@@ -575,10 +556,9 @@ export const ClassProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         goBack,
         logout,
         loginAsTeacherGoogle,
-        approveTeacher,
-        rejectTeacher,
         loginAsStudentWithCode,
         selectStudent,
+        tryAccessStudent,
         addReadingLog,
         addEmotionRecord,
         toggleDutyCompletion,
