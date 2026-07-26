@@ -127,13 +127,12 @@ export const DutyManager: React.FC = () => {
 
           <div className="space-y-2.5">
             {duties.map(d => (
-              <div key={d.id} className="bg-emerald-50/60 border border-emerald-200/70 p-3 rounded-2xl flex items-center justify-between">
+              <div key={d.id} className="bg-emerald-50/60 border border-emerald-200/70 p-3.5 rounded-2xl flex items-center justify-between">
                 <div>
-                  <h4 className="text-xs font-bold text-slate-900">{d.name}</h4>
-                  <p className="text-[11px] text-slate-500">{d.description}</p>
+                  <h4 className="text-sm font-black text-slate-900">{d.name}</h4>
                 </div>
                 <span className="text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-full">
-                  활성
+                  활성 과제
                 </span>
               </div>
             ))}

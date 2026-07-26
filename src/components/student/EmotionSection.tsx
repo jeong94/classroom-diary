@@ -48,7 +48,7 @@ export const EmotionSection: React.FC = () => {
 
       {/* Today's Existing Record Display */}
       {todayRecord && (
-        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 rounded-3xl p-6 space-y-3 shadow-2xs">
+        <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 border-2 border-amber-200 rounded-3xl p-6 space-y-3 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-black text-amber-900 bg-white px-3 py-1 rounded-full border border-amber-300 shadow-2xs flex items-center gap-1">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
@@ -77,7 +77,7 @@ export const EmotionSection: React.FC = () => {
               <h4 className="font-black text-slate-900 text-lg">
                 {EMOTIONS.find(e => e.id === todayRecord.emotion)?.label}
               </h4>
-              <p className="text-xs text-slate-700 font-medium mt-1 bg-white/70 px-3 py-1.5 rounded-xl border border-amber-100">
+              <p className="text-xs text-slate-700 font-medium mt-1 bg-white/80 px-3 py-1.5 rounded-xl border border-amber-100">
                 "{todayRecord.note || '특별한 메모 없이 등록했습니다.'}"
               </p>
             </div>
@@ -85,11 +85,11 @@ export const EmotionSection: React.FC = () => {
         </div>
       )}
 
-      {/* Emotion Selection Grid - Clean 7 Grid Layout */}
+      {/* Emotion Selection Grid - Clean white/pastel cards (Gray background pillars removed) */}
       <form onSubmit={handleSave} className="space-y-5">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-black text-slate-900">오늘의 감정 캐릭터 선택하기</h3>
-          <span className="text-xs text-slate-400 font-medium">아이콘을 선택하면 메모를 남길 수 있습니다.</span>
+          <h3 className="text-sm font-black text-slate-900">오늘의 감정 선택하기</h3>
+          <span className="text-xs text-slate-400 font-medium">아이콘을 클릭해 오늘의 마음을 선택하세요.</span>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
@@ -102,10 +102,10 @@ export const EmotionSection: React.FC = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setSelectedEmotion(emo.id)}
-                className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center justify-center space-y-2 relative overflow-hidden ${
+                className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center justify-center space-y-2 relative overflow-hidden bg-white ${
                   isSelected
-                    ? 'border-amber-500 bg-gradient-to-b from-amber-100 to-orange-100 scale-105 shadow-md'
-                    : 'border-slate-100 hover:border-amber-300 hover:bg-amber-50/60 bg-slate-50/70'
+                    ? 'border-amber-400 bg-amber-50 scale-105 shadow-md'
+                    : 'border-amber-100 hover:border-amber-300 hover:bg-amber-50/40'
                 }`}
               >
                 <span className="text-3xl sm:text-4xl drop-shadow-xs">{emo.emoji}</span>
@@ -122,7 +122,7 @@ export const EmotionSection: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-3 pt-2 bg-amber-50/50 p-5 rounded-2xl border-2 border-amber-200 shadow-2xs"
+            className="space-y-3 pt-2 bg-amber-50/60 p-5 rounded-2xl border-2 border-amber-200 shadow-2xs"
           >
             <div className="flex items-center gap-2">
               <span className="text-2xl">{EMOTIONS.find(e => e.id === selectedEmotion)?.emoji}</span>
