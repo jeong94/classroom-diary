@@ -27,24 +27,24 @@ export const DutySection: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-emerald-100 pb-5">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-800 shadow-inner">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-800 shadow-inner shrink-0">
             <ShieldCheck className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900">1인 1역 과제 🎖️</h2>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 break-keep">1인 1역 과제 🎖️</h2>
             </div>
-            <p className="text-xs text-slate-500 font-medium">우리 반을 가꾸는 나만의 책임 과제</p>
+            <p className="text-xs text-slate-500 font-medium break-keep">우리 반을 가꾸는 나만의 책임 과제</p>
           </div>
         </div>
 
-        <div className="bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-2xl text-center shadow-2xs">
-          <span className="text-[10px] text-emerald-800 font-extrabold block leading-none mb-1">누적 수행 횟수</span>
+        <div className="bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-2xl text-center shadow-2xs shrink-0">
+          <span className="text-[10px] text-emerald-800 font-extrabold block leading-none mb-1 break-keep">누적 수행 횟수</span>
           <span className="text-base font-black text-emerald-950">{totalCompletedCount}회 완료</span>
         </div>
       </div>
 
-      {/* Duty List Cards - Description Removed per user request */}
+      {/* Duty List Cards */}
       <div className="space-y-3">
         {duties.map((duty) => {
           const IconComponent = ICON_MAP[duty.icon] || ShieldCheck;
@@ -67,7 +67,7 @@ export const DutySection: React.FC = () => {
                   <IconComponent className="w-5 h-5 text-emerald-700" />
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="text-sm font-black text-slate-900">{duty.name}</h3>
+                  <h3 className="text-sm font-black text-slate-900 break-keep">{duty.name}</h3>
                   <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-200">
                     총 {totalDutyCount}회 완료
                   </span>
