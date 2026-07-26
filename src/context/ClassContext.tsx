@@ -8,7 +8,7 @@ import { getInitialSeedData, DEFAULT_INVITE_CODE } from '../utils/seedData';
 import { getTodayYMD, getMondayOfWeek } from '../utils/dateUtils';
 import confetti from 'canvas-confetti';
 
-const STORAGE_KEY = 'GROWTH_TRACKER_V3_DATA';
+const STORAGE_KEY = 'GROWTH_TRACKER_V4_DATA';
 
 export interface ViewState {
   mode: 'landing' | 'student' | 'teacher';
@@ -44,6 +44,12 @@ interface ClassContextType {
   loginAsStudentWithCode: (grade: number, classNum: number, realName: string, inviteCode: string) => { success: boolean; message?: string };
   selectStudent: (student: Student | null) => void;
   tryAccessStudent: (student: Student) => { allowed: boolean; message?: string };
+
+  // Deletion Actions (Requirement #4: 학생들이 작성한 내용 각자 삭제)
+  deleteReadingLog: (logId: string) => void;
+  deleteEmotionRecord: (recordId: string) => void;
+  deleteWeeklyGoal: (goalId: string) => void;
+  deletePraiseCard: (cardId: string) => void;
 
   addReadingLog: (bookTitle: string, date: string, pagesRead: number, rating: number, review: string) => void;
   addEmotionRecord: (emotion: EmotionRecord['emotion'], note: string, date?: string) => void;
@@ -99,6 +105,11 @@ export const ClassProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setPraiseCards(parsed.praiseCards || []);
         setTeacherNotes(parsed.teacherNotes || []);
         setStudentBadges(parsed.studentBadges || []);
+
+        if (parsed.currentTeacher) setCurrentTeacher(parsed.currentTeacher);
+        if (parsed.selectedStudent) setSelectedStudentState(parsed.selectedStudent);
+        if (parsed.mode) setModeState(parsed.mode);
+        if (parsed.activeInviteCode) setActiveInviteCode(parsed.activeInviteCode);
       } catch (e) {
         console.error('Failed to parse localStorage:', e);
         loadSeedData();
@@ -127,7 +138,13 @@ export const ClassProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const saveToLocalStorage = (data: Record<string, any>) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      ...data,
+      currentTeacher,
+      selectedStudent,
+      mode,
+      activeInviteCode
+    }));
   };
 
   useEffect(() => {
@@ -147,7 +164,7 @@ export const ClassProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         studentBadges,
       });
     }
-  }, [teachers, schoolClasses, students, duties, badges, readingLogs, emotionRecords, dutyCompletions, weeklyGoals, praiseCards, teacherNotes, studentBadges]);
+  }, [teachers, schoolClasses, students, duties, badges, readingLogs, emotionRecords, dutyCompletions, weeklyGoals, praiseCards, teacherNotes, studentBadges, currentTeacher, selectedStudent, mode, activeInviteCode]);
 
   const pushViewState = (nextState: ViewState) => {
     setNavHistory(prev => [...prev, nextState]);
@@ -157,10 +174,10 @@ export const ClassProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  // Requirement #2: 메인으로 가더라도 로그인 세션 유지되도록 조정
   const goBack = () => {
     if (navHistory.length <= 1) {
       setModeState('landing');
-      setSelectedStudentState(null);
       return;
     }
     const newHistory = [...navHistory];
@@ -193,19 +210,15 @@ export const ClassProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  // Check if a user can open a student's card (Requirement #2: 본인꺼만 누를수 있게 해주고)
   const tryAccessStudent = (student: Student): { allowed: boolean; message?: string } => {
-    // 1. If a teacher is logged in: teacher can view their students' profiles
     if (currentTeacher) {
       selectStudent(student);
       return { allowed: true };
     }
-    // 2. If student is logged in as this exact student: allowed
     if (selectedStudent && selectedStudent.id === student.id) {
       selectStudent(student);
       return { allowed: true };
     }
-    // 3. Otherwise, deny access to other students' personal space
     return {
       allowed: false,
       message: `본인의 성장기록장만 접근할 수 있습니다. [${student.name}] 학생으로 로그인하시거나 초대 코드를 입력해주세요!`
@@ -221,7 +234,7 @@ export const ClassProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
   };
 
-  // Google Login for Teachers - Immediately creates/approves Teacher and Class (Requirement #3)
+  // Google Login for Teachers - Strict Validation
   const loginAsTeacherGoogle = (email: string, name: string, schoolName: string, grade: number, classNum: number): TeacherUser => {
     const existing = teachers.find(t => t.email.toLowerCase() === email.toLowerCase());
 
@@ -282,6 +295,7 @@ export const ClassProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const existingStudent = students.find(s => s.name === realName.trim() && s.classInviteCode === codeToUse);
 
     if (existingStudent) {
+      setSelectedStudentState(existingStudent);
       pushViewState({ mode: 'student', student: existingStudent });
       return { success: true };
     }
@@ -297,8 +311,26 @@ export const ClassProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
 
     setStudents(prev => [...prev, newStudent]);
+    setSelectedStudentState(newStudent);
     pushViewState({ mode: 'student', student: newStudent });
     return { success: true };
+  };
+
+  // Deletion Actions (Requirement #4: 학생들이 작성한 내용 각자 삭제)
+  const deleteReadingLog = (logId: string) => {
+    setReadingLogs(prev => prev.filter(l => l.id !== logId));
+  };
+
+  const deleteEmotionRecord = (recordId: string) => {
+    setEmotionRecords(prev => prev.filter(e => e.id !== recordId));
+  };
+
+  const deleteWeeklyGoal = (goalId: string) => {
+    setWeeklyGoals(prev => prev.filter(g => g.id !== goalId));
+  };
+
+  const deletePraiseCard = (cardId: string) => {
+    setPraiseCards(prev => prev.filter(p => p.id !== cardId));
   };
 
   const checkAutoBadges = (studentId: string) => {
@@ -559,6 +591,10 @@ export const ClassProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         loginAsStudentWithCode,
         selectStudent,
         tryAccessStudent,
+        deleteReadingLog,
+        deleteEmotionRecord,
+        deleteWeeklyGoal,
+        deletePraiseCard,
         addReadingLog,
         addEmotionRecord,
         toggleDutyCompletion,

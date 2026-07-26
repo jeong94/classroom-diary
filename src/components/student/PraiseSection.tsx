@@ -1,23 +1,19 @@
 import React, { useState } from 'react';
 import { useClass } from '../../context/ClassContext';
-import type { PraiseCard } from '../../types';
-import { Heart, Send, Plus } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { MessageSquareHeart, Send, Trash2 } from 'lucide-react';
 
 export const PraiseSection: React.FC = () => {
-  const { selectedStudent, students, praiseCards, addPraiseCard } = useClass();
+  const { selectedStudent, students, praiseCards, addPraiseCard, deletePraiseCard } = useClass();
 
-  const [isOpen, setIsOpen] = useState(false);
   const [toStudentId, setToStudentId] = useState('');
   const [content, setContent] = useState('');
-  const [cardStyle, setCardStyle] = useState<PraiseCard['cardStyle']>('pink');
-  const [tab, setTab] = useState<'received' | 'sent'>('received');
+  const [cardStyle, setCardStyle] = useState<'pink' | 'yellow' | 'blue' | 'purple' | 'green'>('yellow');
 
   if (!selectedStudent) return null;
 
-  const classmates = students.filter(s => s.id !== selectedStudent.id);
-  const receivedCards = praiseCards.filter(p => p.toStudentId === selectedStudent.id);
-  const sentCards = praiseCards.filter(p => p.fromStudentId === selectedStudent.id);
+  const myPraiseReceived = praiseCards.filter(p => p.toStudentId === selectedStudent.id);
+  const myPraiseSent = praiseCards.filter(p => p.fromStudentId === selectedStudent.id);
+  const otherStudents = students.filter(s => s.id !== selectedStudent.id);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,203 +22,153 @@ export const PraiseSection: React.FC = () => {
     const targetStudent = students.find(s => s.id === toStudentId);
     if (!targetStudent) return;
 
-    addPraiseCard(targetStudent.id, targetStudent.name, content.trim(), cardStyle);
+    addPraiseCard(
+      targetStudent.id,
+      targetStudent.name,
+      content.trim(),
+      cardStyle
+    );
 
     setToStudentId('');
     setContent('');
-    setIsOpen(false);
   };
 
-  const getStyleClasses = (style?: PraiseCard['cardStyle']) => {
-    switch (style) {
-      case 'yellow':
-        return 'bg-amber-50 border-amber-200 text-amber-900';
-      case 'blue':
-        return 'bg-sky-50 border-sky-200 text-sky-900';
-      case 'purple':
-        return 'bg-purple-50 border-purple-200 text-purple-900';
-      case 'green':
-        return 'bg-emerald-50 border-emerald-200 text-emerald-900';
-      case 'pink':
-      default:
-        return 'bg-rose-50 border-rose-200 text-rose-900';
-    }
+  const styleMap = {
+    yellow: 'bg-amber-100 border-amber-300 text-amber-950',
+    pink: 'bg-rose-100 border-rose-300 text-rose-950',
+    blue: 'bg-sky-100 border-sky-300 text-sky-950',
+    purple: 'bg-purple-100 border-purple-300 text-purple-950',
+    green: 'bg-emerald-100 border-emerald-300 text-emerald-950',
   };
 
   return (
-    <div className="bg-white rounded-3xl p-6 shadow-soft hover:shadow-soft-hover transition-all border border-rose-100/70 flex flex-col justify-between h-full">
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center text-rose-800 shadow-inner">
-              <Heart className="w-6 h-6 fill-rose-400 text-rose-500" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-slate-900">⑤ 칭찬 릴레이</h3>
-              <p className="text-xs text-slate-500 font-medium">따뜻한 말 한마디로 전하는 마음</p>
-            </div>
+    <div className="bg-white rounded-3xl p-6 sm:p-8 border border-amber-100 shadow-soft space-y-6">
+      <div className="flex items-center justify-between border-b border-amber-100 pb-5">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center text-rose-600 shadow-inner">
+            <MessageSquareHeart className="w-6 h-6" />
           </div>
-
-          <button
-            onClick={() => setIsOpen(true)}
-            className="flex items-center gap-1 px-3 py-1.5 bg-rose-400 hover:bg-rose-500 text-white font-bold text-xs rounded-full shadow-sm transition-all hover:scale-105"
-          >
-            <Plus className="w-4 h-4" />
-            <span>칭찬 쓰기</span>
-          </button>
-        </div>
-
-        <div className="flex items-center gap-2 mb-3 bg-slate-100 p-1 rounded-xl text-xs font-bold">
-          <button
-            onClick={() => setTab('received')}
-            className={`flex-1 py-1.5 rounded-lg transition-all ${
-              tab === 'received' ? 'bg-white text-rose-700 shadow-xs' : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            내가 받은 칭찬 ({receivedCards.length})
-          </button>
-          <button
-            onClick={() => setTab('sent')}
-            className={`flex-1 py-1.5 rounded-lg transition-all ${
-              tab === 'sent' ? 'bg-white text-rose-700 shadow-xs' : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            내가 보낸 칭찬 ({sentCards.length})
-          </button>
-        </div>
-
-        <div className="space-y-2.5 max-h-48 overflow-y-auto pr-1">
-          {tab === 'received' ? (
-            receivedCards.length === 0 ? (
-              <div className="text-center py-6 bg-rose-50/40 rounded-2xl border border-dashed border-rose-200">
-                <Heart className="w-7 h-7 text-rose-300 mx-auto mb-1 opacity-70" />
-                <p className="text-xs text-slate-400 font-medium">아직 받은 칭찬 카드가 없어요.</p>
-              </div>
-            ) : (
-              receivedCards.map(card => (
-                <div
-                  key={card.id}
-                  className={`p-3 rounded-2xl border ${getStyleClasses(card.cardStyle)} shadow-2xs relative`}
-                >
-                  <div className="flex items-center justify-between text-xs font-bold mb-1">
-                    <span className="text-rose-700">From. {card.fromStudentName}</span>
-                    <span className="text-[10px] opacity-60 font-normal">{card.createdAt}</span>
-                  </div>
-                  <p className="text-xs font-medium leading-relaxed">"{card.content}"</p>
-                </div>
-              ))
-            )
-          ) : (
-            sentCards.length === 0 ? (
-              <div className="text-center py-6 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                <Send className="w-7 h-7 text-slate-300 mx-auto mb-1 opacity-70" />
-                <p className="text-xs text-slate-400 font-medium">친구에게 첫 칭찬을 보내보세요!</p>
-              </div>
-            ) : (
-              sentCards.map(card => (
-                <div
-                  key={card.id}
-                  className={`p-3 rounded-2xl border ${getStyleClasses(card.cardStyle)} shadow-2xs`}
-                >
-                  <div className="flex items-center justify-between text-xs font-bold mb-1">
-                    <span className="text-rose-700">To. {card.toStudentName}</span>
-                    <span className="text-[10px] opacity-60 font-normal">{card.createdAt}</span>
-                  </div>
-                  <p className="text-xs font-medium leading-relaxed">"{card.content}"</p>
-                </div>
-              ))
-            )
-          )}
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900">칭찬 릴레이 💌</h2>
+              <span className="bg-rose-100 text-rose-900 text-xs font-black px-2.5 py-0.5 rounded-full">
+                받은 칭찬 {myPraiseReceived.length}개
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 font-medium">친구들에게 따뜻한 칭찬과 응원의 카드를 선물하세요</p>
+          </div>
         </div>
       </div>
 
-      <AnimatePresence>
-        {isOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-rose-100"
+      <form onSubmit={handleSubmit} className="space-y-4 bg-rose-50/40 p-5 rounded-3xl border border-rose-200">
+        <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-1.5">
+          <Send className="w-4 h-4 text-rose-500" />
+          <span>친구에게 칭찬 카드 보내기</span>
+        </h3>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">칭찬할 친구 선택 *</label>
+            <select
+              required
+              value={toStudentId}
+              onChange={(e) => setToStudentId(e.target.value)}
+              className="w-full px-3.5 py-2.5 text-xs font-bold rounded-xl border border-rose-300 focus:ring-2 focus:ring-rose-400 focus:outline-none bg-white"
             >
-              <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                <Heart className="w-5 h-5 text-rose-500 fill-rose-500" />
-                칭찬 카드 보내기
-              </h3>
+              <option value="">친구를 선택하세요</option>
+              {otherStudents.map(s => (
+                <option key={s.id} value={s.id}>{s.studentNumber}번 {s.name}</option>
+              ))}
+            </select>
+          </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">칭찬할 친구 선택</label>
-                  <select
-                    required
-                    value={toStudentId}
-                    onChange={e => setToStudentId(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-400 bg-white"
-                  >
-                    <option value="">-- 친구를 선택하세요 --</option>
-                    {classmates.map(std => (
-                      <option key={std.id} value={std.id}>
-                        {std.studentNumber}번 {std.name} {std.avatarEmoji}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">카드 색상 선택</label>
+            <div className="flex items-center gap-2 pt-1">
+              {(['yellow', 'pink', 'blue', 'purple', 'green'] as const).map(color => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => setCardStyle(color)}
+                  className={`w-7 h-7 rounded-full border-2 transition-transform ${
+                    color === 'yellow' ? 'bg-amber-300' :
+                    color === 'pink' ? 'bg-rose-300' :
+                    color === 'blue' ? 'bg-sky-300' :
+                    color === 'purple' ? 'bg-purple-300' : 'bg-emerald-300'
+                  } ${cardStyle === color ? 'scale-125 border-slate-900 shadow-xs' : 'border-transparent hover:scale-110'}`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">카드 색상 스타일</label>
-                  <div className="flex items-center gap-2">
-                    {[
-                      { id: 'pink', color: 'bg-rose-200 border-rose-300' },
-                      { id: 'yellow', color: 'bg-amber-200 border-amber-300' },
-                      { id: 'blue', color: 'bg-sky-200 border-sky-300' },
-                      { id: 'purple', color: 'bg-purple-200 border-purple-300' },
-                      { id: 'green', color: 'bg-emerald-200 border-emerald-300' },
-                    ].map(st => (
-                      <button
-                        key={st.id}
-                        type="button"
-                        onClick={() => setCardStyle(st.id as PraiseCard['cardStyle'])}
-                        className={`w-7 h-7 rounded-full border-2 transition-transform ${st.color} ${
-                          cardStyle === st.id ? 'scale-125 shadow-md border-slate-800' : 'hover:scale-110'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
+        <div>
+          <label className="block text-xs font-bold text-slate-700 mb-1">칭찬 내용 *</label>
+          <textarea
+            rows={3}
+            required
+            placeholder="친구에게 고마웠던 일이나 훌륭한 점을 적어보세요."
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            className="w-full px-3.5 py-2.5 text-xs font-medium rounded-xl border border-rose-300 focus:ring-2 focus:ring-rose-400 focus:outline-none bg-white"
+          />
+        </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">칭찬 내용</label>
-                  <textarea
-                    required
-                    rows={3}
-                    placeholder="예: ○○가 청소를 도와주었어요, 체육 시간에 양보해줘서 고마워!"
-                    value={content}
-                    onChange={e => setContent(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-400"
-                  />
-                </div>
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            className="px-5 py-2.5 bg-rose-500 hover:bg-rose-600 text-white font-black text-xs rounded-xl shadow-xs transition-transform hover:scale-105"
+          >
+            칭찬 카드 보내기 💌
+          </button>
+        </div>
+      </form>
 
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsOpen(false)}
-                    className="px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-800"
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-5 py-2 text-xs font-bold text-white bg-rose-500 hover:bg-rose-600 rounded-full shadow-sm flex items-center gap-1.5"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                    <span>카드 전달하기</span>
-                  </button>
+      <div className="space-y-3">
+        <h3 className="text-sm font-extrabold text-slate-900">내가 받은 칭찬 카드 ({myPraiseReceived.length}장)</h3>
+        {myPraiseReceived.length === 0 ? (
+          <div className="text-center py-8 bg-rose-50/20 rounded-2xl border border-dashed border-rose-200 text-xs text-slate-400">
+            아직 받은 칭찬 카드가 없습니다. 먼저 친구에게 따뜻한 칭찬 카드를 남겨보세요!
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {myPraiseReceived.map(card => (
+              <div key={card.id} className={`p-4 rounded-2xl border-2 shadow-2xs space-y-2 ${styleMap[card.cardStyle || 'yellow']}`}>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-extrabold">{card.fromStudentName} 친구가</span>
+                  <span className="text-[10px] opacity-70">{card.createdAt}</span>
                 </div>
-              </form>
-            </motion.div>
+                <p className="text-xs font-bold leading-relaxed">"{card.content}"</p>
+              </div>
+            ))}
           </div>
         )}
-      </AnimatePresence>
+      </div>
+
+      <div className="space-y-3 pt-2">
+        <h3 className="text-sm font-extrabold text-slate-900">내가 보낸 칭찬 카드 ({myPraiseSent.length}장)</h3>
+        <div className="space-y-2">
+          {myPraiseSent.map(card => (
+            <div key={card.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs font-medium">
+              <div>
+                <span className="font-bold text-slate-900">{card.toStudentName}</span> 친구에게: "{card.content}"
+              </div>
+
+              <button
+                onClick={() => {
+                  if (confirm('보낸 칭찬 카드를 삭제하시겠습니까?')) {
+                    deletePraiseCard(card.id);
+                  }
+                }}
+                className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors shrink-0 ml-2"
+                title="칭찬 카드 삭제"
+              >
+                <Trash2 className="w-4 h-4 text-rose-500" />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };

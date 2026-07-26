@@ -1,26 +1,13 @@
 import React, { useState } from 'react';
 import { useClass } from '../context/ClassContext';
 import { getTodayFormatted, getTodayQuote } from '../utils/dateUtils';
-import { StudentProfileModal } from '../components/profile/StudentProfileModal';
 import { LoginModal } from '../components/auth/LoginModal';
-import type { Student } from '../types';
-import { Sparkles, ArrowRight, Award, UserCheck, Lock } from 'lucide-react';
+import { Sparkles, ArrowRight, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const LandingPage: React.FC = () => {
-  const { students, tryAccessStudent, getStudentStats, studentBadges, currentTeacher, selectedStudent } = useClass();
-
+  const { currentTeacher, selectedStudent, setMode, logout } = useClass();
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [profileStudent, setProfileStudent] = useState<Student | null>(null);
-  const [accessAlert, setAccessAlert] = useState<string | null>(null);
-
-  const handleStudentCardClick = (student: Student) => {
-    const check = tryAccessStudent(student);
-    if (!check.allowed) {
-      setAccessAlert(check.message || '본인의 성장기록장만 접근할 수 있습니다. 먼저 로그인해주세요!');
-      setShowLoginModal(true);
-    }
-  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
@@ -52,19 +39,42 @@ export const LandingPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Access Alert Toast */}
-      {accessAlert && (
-        <div className="bg-rose-50 border-2 border-rose-200 text-rose-900 px-5 py-3 rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-between shadow-sm max-w-2xl mx-auto">
-          <div className="flex items-center gap-2">
-            <Lock className="w-4 h-4 text-rose-600" />
-            <span>{accessAlert}</span>
+      {/* Persistent Login Session Welcome Card */}
+      {(currentTeacher || selectedStudent) && (
+        <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50 border-2 border-emerald-300 rounded-3xl p-6 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4 max-w-4xl mx-auto">
+          <div className="flex items-center gap-3 text-center sm:text-left">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-200 flex items-center justify-center text-2xl shadow-inner shrink-0">
+              {currentTeacher ? '👩‍🏫' : selectedStudent?.avatarEmoji || '🙋‍♂️'}
+            </div>
+            <div>
+              <span className="text-[10px] font-extrabold bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full">
+                현재 로그인됨 (세션 유지 중)
+              </span>
+              <h3 className="text-lg font-black text-slate-900 mt-0.5">
+                {currentTeacher
+                  ? `반갑습니다, ${currentTeacher.schoolName} ${currentTeacher.grade}-${currentTeacher.classNum} ${currentTeacher.name} 선생님!`
+                  : `반갑습니다, ${selectedStudent?.name} 학생!`
+                }
+              </h3>
+            </div>
           </div>
-          <button
-            onClick={() => setAccessAlert(null)}
-            className="text-xs text-rose-700 underline font-bold"
-          >
-            닫기
-          </button>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => setMode(currentTeacher ? 'teacher' : 'student')}
+              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-xs transition-transform hover:scale-105 flex items-center gap-1.5"
+            >
+              <span>{currentTeacher ? '학반 대시보드로 이동' : '내 성장기록장으로 이동'}</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+            <button
+              onClick={logout}
+              className="px-3.5 py-2.5 bg-white border border-slate-300 hover:bg-rose-50 hover:text-rose-600 text-slate-600 font-bold text-xs rounded-xl transition-colors flex items-center gap-1"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>로그아웃</span>
+            </button>
+          </div>
         </div>
       )}
 
@@ -137,88 +147,8 @@ export const LandingPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Student Roster Overview (Card Protection Enabled) */}
-      <div className="space-y-4 pt-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-            <UserCheck className="w-5 h-5 text-amber-500" />
-            <span>학급 학생 명부 ({students.length}명)</span>
-          </h3>
-          <span className="text-xs text-slate-400">🔒 본인 또는 선생님만 학생의 개인 성장기록장에 입장할 수 있습니다.</span>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {students.map((student) => {
-            const stats = getStudentStats(student.id);
-            const myBadgeCount = studentBadges.filter(b => b.studentId === student.id).length;
-
-            return (
-              <motion.div
-                key={student.id}
-                whileHover={{ y: -6, scale: 1.02 }}
-                className="bg-white rounded-3xl p-5 border border-amber-100 shadow-soft hover:shadow-soft-hover transition-all flex flex-col justify-between group cursor-pointer relative overflow-hidden"
-                onClick={() => handleStudentCardClick(student)}
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-black text-amber-900 bg-amber-100 px-2.5 py-0.5 rounded-full border border-amber-200">
-                      {student.studentNumber}번
-                    </span>
-                    {myBadgeCount > 0 && (
-                      <span className="text-xs font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <Award className="w-3 h-3 text-amber-500" />
-                        {myBadgeCount}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col items-center text-center space-y-2 py-2">
-                    <div
-                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl flex items-center justify-center text-3xl sm:text-4xl shadow-inner border-2 border-white group-hover:rotate-6 transition-transform"
-                      style={{ backgroundColor: student.avatarBgColor }}
-                    >
-                      {student.avatarEmoji}
-                    </div>
-                    <h3 className="text-lg font-extrabold text-slate-900 group-hover:text-amber-600 transition-colors">
-                      {student.name}
-                    </h3>
-                    <p className="text-[11px] text-slate-500 font-medium truncate max-w-full italic px-2">
-                      "{student.motto || '오늘도 화이팅!'}"
-                    </p>
-                  </div>
-                </div>
-
-                <div className="pt-3 border-t border-slate-100 mt-2 flex items-center justify-between text-[11px] text-slate-500 font-medium">
-                  <span>독서 {stats.totalBooks}권</span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (currentTeacher || (selectedStudent && selectedStudent.id === student.id)) {
-                        setProfileStudent(student);
-                      } else {
-                        handleStudentCardClick(student);
-                      }
-                    }}
-                    className="text-amber-600 hover:text-amber-800 font-bold underline"
-                  >
-                    프로필
-                  </button>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
-      </div>
-
       {showLoginModal && (
         <LoginModal onClose={() => setShowLoginModal(false)} />
-      )}
-
-      {profileStudent && (
-        <StudentProfileModal
-          student={profileStudent}
-          onClose={() => setProfileStudent(null)}
-        />
       )}
     </div>
   );

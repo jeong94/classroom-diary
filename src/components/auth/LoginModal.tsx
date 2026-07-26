@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useClass } from '../../context/ClassContext';
 import { DEFAULT_INVITE_CODE } from '../../utils/seedData';
 import { signInWithGoogle, signInAnonymousStudent } from '../../firebase';
-import { ArrowRight, X } from 'lucide-react';
+import { ArrowRight, X, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface LoginModalProps {
@@ -14,17 +14,20 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
 
   const [activeTab, setActiveTab] = useState<'student' | 'teacher'>('student');
 
+  // Student Form State
   const [stdGrade, setStdGrade] = useState<number>(6);
   const [stdClassNum, setStdClassNum] = useState<number>(1);
   const [stdRealName, setStdRealName] = useState<string>('');
   const [stdInviteCode, setStdInviteCode] = useState<string>(DEFAULT_INVITE_CODE);
   const [stdError, setStdError] = useState<string | null>(null);
 
-  const [tchEmail] = useState<string>('');
+  // Teacher Form State - Required Fields
   const [tchName, setTchName] = useState<string>('');
-  const [tchSchool, setTchSchool] = useState<string>('중앙초등학교');
+  const [tchSchool, setTchSchool] = useState<string>('');
   const [tchGrade, setTchGrade] = useState<number>(6);
   const [tchClassNum, setTchClassNum] = useState<number>(1);
+  const [tchError, setTchError] = useState<string | null>(null);
+
   const [isLoading, setIsLoading] = useState(false);
 
   const handleStudentLogin = async (e: React.FormEvent) => {
@@ -47,25 +50,25 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
     }
   };
 
+  // Requirement #3: Strict validation for Teacher registration
   const handleTeacherGoogleLogin = async () => {
-    setIsLoading(true);
-    let finalEmail = tchEmail;
-    let finalName = tchName;
-
-    // Trigger Google Login popup
-    const fbUser = await signInWithGoogle();
-    if (fbUser && fbUser.email) {
-      finalEmail = fbUser.email;
-      finalName = fbUser.displayName || tchName || '선생님';
-    } else {
-      finalEmail = 'teacher.google@growth.edu';
-      finalName = tchName || '김담임 선생님';
+    setTchError(null);
+    if (!tchSchool.trim() || !tchName.trim()) {
+      setTchError('학교명과 선생님 실명을 반드시 입력해 주셔야 구글 로그인이 진행됩니다! (임의 로그인 방지)');
+      return;
     }
+
+    setIsLoading(true);
+
+    // Trigger real Google Auth popup
+    const fbUser = await signInWithGoogle();
+    const finalEmail = fbUser?.email || `teacher.${Date.now()}@growth.edu`;
+    const finalName = tchName.trim();
 
     loginAsTeacherGoogle(
       finalEmail,
-      finalName || '김담임 선생님',
-      tchSchool,
+      finalName,
+      tchSchool.trim(),
       tchGrade,
       tchClassNum
     );
@@ -134,7 +137,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
               </div>
               <h3 className="font-black text-slate-900 text-base">교사로 입장</h3>
               <p className="text-[11px] text-slate-500 font-medium leading-tight">
-                Google 계정 + 학반 정보로 접속
+                학교/학반 정보 + Google 로그인
               </p>
             </button>
           </div>
@@ -199,8 +202,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
               </div>
 
               {stdError && (
-                <p className="text-xs font-bold text-rose-600 bg-rose-50 p-2.5 rounded-xl border border-rose-200">
-                  ⚠️ {stdError}
+                <p className="text-xs font-bold text-rose-600 bg-rose-50 p-2.5 rounded-xl border border-rose-200 flex items-center gap-1">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{stdError}</span>
                 </p>
               )}
 
@@ -248,30 +252,43 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">학교명</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">학교명 (필수)</label>
                     <input
                       type="text"
                       required
                       placeholder="예: 서울초등학교"
                       value={tchSchool}
-                      onChange={(e) => setTchSchool(e.target.value)}
+                      onChange={(e) => {
+                        setTchError(null);
+                        setTchSchool(e.target.value);
+                      }}
                       className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-purple-300 focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">선생님 실명</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">선생님 실명 (필수)</label>
                     <input
                       type="text"
                       required
-                      placeholder="예: 김담임 선생님"
+                      placeholder="예: 김담임 교사"
                       value={tchName}
-                      onChange={(e) => setTchName(e.target.value)}
+                      onChange={(e) => {
+                        setTchError(null);
+                        setTchName(e.target.value);
+                      }}
                       className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-purple-300 focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white"
                     />
                   </div>
                 </div>
               </div>
+
+              {tchError && (
+                <p className="text-xs font-bold text-rose-600 bg-rose-50 p-2.5 rounded-xl border border-rose-200 flex items-center gap-1">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{tchError}</span>
+                </p>
+              )}
 
               <div className="pt-2">
                 <button
