@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import type { Student } from '../../types';
 import { useClass } from '../../context/ClassContext';
 import { EMOTIONS, getMonthDays } from '../../utils/dateUtils';
-import { X, BookOpen, Award, CheckCircle2, Heart, Calendar, Lock, Sparkles } from 'lucide-react';
+import { X, BookOpen, Award, CheckCircle2, Heart, Calendar, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface StudentProfileModalProps {
@@ -12,19 +12,16 @@ interface StudentProfileModalProps {
 
 export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({ student, onClose }) => {
   const {
-    mode,
     badges,
     studentBadges,
     getStudentStats,
     emotionRecords,
-    praiseCards,
-    teacherNotes
+    praiseCards
   } = useClass();
 
   const stats = getStudentStats(student.id);
   const myBadges = studentBadges.filter(sb => sb.studentId === student.id);
   const myPraises = praiseCards.filter(pc => pc.toStudentId === student.id);
-  const myNotes = teacherNotes.filter(tn => tn.studentId === student.id);
 
   const today = new Date();
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
@@ -139,7 +136,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({ studen
             )}
           </div>
 
-          {/* Monthly Emotion Calendar Grid - Aesthetic Styling */}
+          {/* Monthly Emotion Calendar Grid */}
           <div className="bg-purple-50/50 border border-purple-200/60 rounded-3xl p-5 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -227,39 +224,6 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({ studen
               </div>
             )}
           </div>
-
-          {/* Private Teacher Notes */}
-          {mode === 'teacher' && (
-            <div className="bg-slate-900 text-slate-100 rounded-2xl p-4 space-y-3 shadow-inner border border-slate-700">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-amber-300">
-                  <Lock className="w-4 h-4" />
-                  <h3 className="font-bold text-sm">교사 전용 비공개 관찰 메모 (생활기록부 참고용)</h3>
-                </div>
-                <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full border border-slate-700">
-                  학생 비공개
-                </span>
-              </div>
-
-              {myNotes.length === 0 ? (
-                <p className="text-xs text-slate-400 italic">작성된 비공개 메모가 없습니다. 교사 모드 메모 탭에서 작성할 수 있습니다.</p>
-              ) : (
-                <div className="space-y-2">
-                  {myNotes.map(n => (
-                    <div key={n.id} className="bg-slate-800/80 border border-slate-700 rounded-xl p-3 text-xs space-y-1">
-                      <div className="flex items-center justify-between text-amber-400 font-medium">
-                        <span className="bg-amber-400/20 text-amber-300 text-[10px] px-2 py-0.5 rounded-md">
-                          {n.category}
-                        </span>
-                        <span className="text-[10px] text-slate-400">{n.date}</span>
-                      </div>
-                      <p className="text-slate-200">{n.content}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </motion.div>
     </div>

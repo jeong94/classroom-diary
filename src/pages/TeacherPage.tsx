@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { useClass } from '../context/ClassContext';
 import { ClassDashboard } from '../components/teacher/ClassDashboard';
-import { TeacherNotes } from '../components/teacher/TeacherNotes';
 import { BadgeManager } from '../components/teacher/BadgeManager';
 import { StatsView } from '../components/teacher/StatsView';
 import { DutyManager } from '../components/teacher/DutyManager';
 import { StudentInviteManager } from '../components/teacher/StudentInviteManager';
 import { StudentProfileModal } from '../components/profile/StudentProfileModal';
 import type { Student } from '../types';
-import { LayoutDashboard, Users, Lock, Award, Trophy, Settings, Key } from 'lucide-react';
+import { LayoutDashboard, Users, Award, Trophy, Settings, Key } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const TeacherPage: React.FC = () => {
@@ -17,11 +16,11 @@ export const TeacherPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [profileStudent, setProfileStudent] = useState<Student | null>(null);
 
+  // 생기부 관찰 메모 탭 제거 per user request
   const tabs = [
     { id: 'dashboard', label: '학급 대시보드', icon: LayoutDashboard },
     { id: 'invite', label: '학생 초대 (초대코드)', icon: Key },
     { id: 'students', label: '학생 목록', icon: Users },
-    { id: 'notes', label: '기록 관리 (교사 메모)', icon: Lock },
     { id: 'badges', label: '배지 관리', icon: Award },
     { id: 'stats', label: '목표 & 칭찬 통계', icon: Trophy },
     { id: 'settings', label: '학급 설정', icon: Settings },
@@ -59,7 +58,7 @@ export const TeacherPage: React.FC = () => {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-extrabold text-slate-900">학급 학생 목록 ({students.length}명)</h2>
-              <span className="text-xs text-slate-500 font-medium">학생카드를 클릭하여 상세 프로필 및 비공개 메모를 확인하세요.</span>
+              <span className="text-xs text-slate-500 font-medium">학생카드를 클릭하여 상세 프로필을 확인하세요.</span>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
@@ -103,7 +102,6 @@ export const TeacherPage: React.FC = () => {
           </div>
         )}
 
-        {activeTab === 'notes' && <TeacherNotes />}
         {activeTab === 'badges' && <BadgeManager />}
         {activeTab === 'stats' && <StatsView />}
         {activeTab === 'settings' && <DutyManager />}
