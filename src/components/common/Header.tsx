@@ -28,9 +28,6 @@ export const Header: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-black text-slate-900 tracking-tight break-keep">우리반 성장기록장</h1>
-              <span className="bg-amber-100 text-amber-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-amber-300">
-                초등 6학년
-              </span>
             </div>
             <p className="text-[11px] text-slate-500 font-medium break-keep">매일 조금씩 성장하는 우리들의 이야기</p>
           </div>
