@@ -10,13 +10,14 @@ import {
   getFirestore
 } from 'firebase/firestore';
 
+// Embedded default Firebase configuration to prevent white-screen boot crashes
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || ""
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDYlMozdTERryEtFee6ivtvNh-7o5gsO0I",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "classroom-diary-3d1ec.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "classroom-diary-3d1ec",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "classroom-diary-3d1ec.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "953979010475",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:953979010475:web:8cb6997536066bd23b26ee"
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
@@ -28,7 +29,7 @@ googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 export const db = getFirestore(app);
 
-export const isFirebaseConfigured = Boolean(import.meta.env.VITE_FIREBASE_API_KEY);
+export const isFirebaseConfigured = Boolean(import.meta.env.VITE_FIREBASE_API_KEY || firebaseConfig.apiKey);
 
 /**
  * Trigger Real Google Sign-In Account Selector Popup
