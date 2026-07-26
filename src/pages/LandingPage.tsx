@@ -21,10 +21,10 @@ export const LandingPage: React.FC = () => {
             <span>오늘 날짜: {getTodayFormatted()}</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl font-black text-slate-950 tracking-tight leading-tight">
+          <h1 className="text-3xl sm:text-5xl font-black text-slate-950 tracking-tight leading-tight break-keep">
             우리반 성장기록장 🌱
           </h1>
-          <p className="text-base sm:text-xl font-bold text-slate-700">
+          <p className="text-base sm:text-xl font-bold text-slate-700 break-keep">
             매일 조금씩 성장하는 우리들의 이야기
           </p>
 
@@ -32,7 +32,7 @@ export const LandingPage: React.FC = () => {
             <span className="text-[11px] font-extrabold text-amber-800 uppercase tracking-wider block mb-0.5">
               💡 오늘의 응원 한마디
             </span>
-            <p className="text-sm font-bold text-slate-800 italic">
+            <p className="text-sm font-bold text-slate-800 italic break-keep">
               "{getTodayQuote()}"
             </p>
           </div>
@@ -50,7 +50,7 @@ export const LandingPage: React.FC = () => {
               <span className="text-[10px] font-extrabold bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full">
                 현재 로그인됨 (세션 유지 중)
               </span>
-              <h3 className="text-lg font-black text-slate-900 mt-0.5">
+              <h3 className="text-lg font-black text-slate-900 mt-0.5 break-keep">
                 {currentTeacher
                   ? `반갑습니다, ${currentTeacher.schoolName} ${currentTeacher.grade}-${currentTeacher.classNum} ${currentTeacher.name} 선생님!`
                   : `반갑습니다, ${selectedStudent?.name} 학생!`
@@ -78,14 +78,11 @@ export const LandingPage: React.FC = () => {
         </div>
       )}
 
-      {/* Main Login Selection Boxes */}
+      {/* Main Login Selection Boxes - Small top pill banner removed per user request */}
       <div className="space-y-4">
         <div className="text-center max-w-xl mx-auto space-y-1">
-          <span className="bg-amber-100 text-amber-900 text-xs font-extrabold px-3 py-1 rounded-full border border-amber-300">
-            신분별 입장 선택
-          </span>
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-900">어떤 신분으로 접속하시나요?</h2>
-          <p className="text-xs text-slate-500 font-bold">학생은 초대코드+실명으로, 교사는 Google 계정으로 로그인합니다.</p>
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 break-keep">어떤 신분으로 접속하시나요?</h2>
+          <p className="text-xs text-slate-500 font-bold break-keep">학생은 초대코드+실명으로, 교사는 Google 계정으로 로그인합니다.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
@@ -101,10 +98,10 @@ export const LandingPage: React.FC = () => {
               <span className="text-xs font-extrabold text-amber-800 bg-amber-100 px-3 py-1 rounded-full border border-amber-200 inline-block">
                 학생 전용 로그인
               </span>
-              <h3 className="text-2xl font-black text-slate-900 group-hover:text-amber-600 transition-colors">
+              <h3 className="text-2xl font-black text-slate-900 group-hover:text-amber-600 transition-colors break-keep">
                 학생으로 접속하기
               </h3>
-              <p className="text-xs text-slate-500 font-medium leading-relaxed">
+              <p className="text-xs text-slate-500 font-medium leading-relaxed break-keep">
                 학년 (1~6학년), 반 (1~10반), <b>이름(실명 필수 - 닉네임 금지)</b> 및 담임 선생님의 학반 초대 코드를 입력하여 내 성장기록장에 들어갑니다.
               </p>
             </div>
@@ -130,8 +127,8 @@ export const LandingPage: React.FC = () => {
               <span className="text-xs font-extrabold text-purple-200 bg-white/10 px-3 py-1 rounded-full border border-white/20 inline-block">
                 교사 전용 로그인
               </span>
-              <h3 className="text-2xl font-black">교사로 접속하기</h3>
-              <p className="text-xs text-purple-100 font-medium leading-relaxed">
+              <h3 className="text-2xl font-black break-keep">교사로 접속하기</h3>
+              <p className="text-xs text-purple-100 font-medium leading-relaxed break-keep">
                 <b>Google 계정으로 로그인</b> 후 선생님 실명, 학교명, 학년 (1~6학년), 반 (1~10반)을 입력하여 학반 관리자 권한을 가집니다.
               </p>
             </div>

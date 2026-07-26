@@ -8,7 +8,7 @@ import { getInitialSeedData, DEFAULT_INVITE_CODE } from '../utils/seedData';
 import { getTodayYMD, getMondayOfWeek } from '../utils/dateUtils';
 import confetti from 'canvas-confetti';
 
-const STORAGE_KEY = 'GROWTH_TRACKER_V4_DATA';
+const STORAGE_KEY = 'GROWTH_TRACKER_V5_DATA';
 
 export interface ViewState {
   mode: 'landing' | 'student' | 'teacher';
@@ -45,7 +45,6 @@ interface ClassContextType {
   selectStudent: (student: Student | null) => void;
   tryAccessStudent: (student: Student) => { allowed: boolean; message?: string };
 
-  // Deletion Actions (Requirement #4: 학생들이 작성한 내용 각자 삭제)
   deleteReadingLog: (logId: string) => void;
   deleteEmotionRecord: (recordId: string) => void;
   deleteWeeklyGoal: (goalId: string) => void;
@@ -67,6 +66,18 @@ interface ClassContextType {
 
 const ClassContext = createContext<ClassContextType | undefined>(undefined);
 
+/**
+ * Requirement #2: Sort students by Korean alphabetical name order (이름순 ㄱㄴㄷ 정렬)
+ */
+const sortStudentsByName = (list: Student[]): Student[] => {
+  return [...list]
+    .sort((a, b) => a.name.localeCompare(b.name, 'ko'))
+    .map((s, idx) => ({
+      ...s,
+      studentNumber: idx + 1
+    }));
+};
+
 export const ClassProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [mode, setModeState] = useState<'landing' | 'student' | 'teacher'>('landing');
   const [selectedStudent, setSelectedStudentState] = useState<Student | null>(null);
@@ -77,7 +88,7 @@ export const ClassProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const [teachers, setTeachers] = useState<TeacherUser[]>([]);
   const [schoolClasses, setSchoolClasses] = useState<SchoolClass[]>([]);
-  const [students, setStudents] = useState<Student[]>([]);
+  const [students, setStudentsState] = useState<Student[]>([]);
   const [duties, setDuties] = useState<Duty[]>([]);
   const [badges, setBadges] = useState<Badge[]>([]);
   const [readingLogs, setReadingLogs] = useState<ReadingLog[]>([]);
@@ -88,6 +99,14 @@ export const ClassProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [teacherNotes, setTeacherNotes] = useState<TeacherNote[]>([]);
   const [studentBadges, setStudentBadges] = useState<StudentBadge[]>([]);
 
+  // Wrapper function to always keep students sorted by name (이름순 정렬)
+  const setStudents = (action: Student[] | ((prev: Student[]) => Student[])) => {
+    setStudentsState(prev => {
+      const next = typeof action === 'function' ? action(prev) : action;
+      return sortStudentsByName(next);
+    });
+  };
+
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -95,7 +114,7 @@ export const ClassProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const parsed = JSON.parse(saved);
         setTeachers(parsed.teachers || []);
         setSchoolClasses(parsed.schoolClasses || []);
-        setStudents(parsed.students || []);
+        setStudents(parsed.students ? sortStudentsByName(parsed.students) : []);
         setDuties(parsed.duties || []);
         setBadges(parsed.badges || []);
         setReadingLogs(parsed.readingLogs || []);
@@ -123,7 +142,7 @@ export const ClassProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const seed = getInitialSeedData();
     setTeachers(seed.teachers);
     setSchoolClasses(seed.schoolClasses);
-    setStudents(seed.students);
+    setStudents(sortStudentsByName(seed.students));
     setDuties(seed.duties);
     setBadges(seed.badges);
     setReadingLogs(seed.readingLogs);
@@ -174,7 +193,6 @@ export const ClassProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  // Requirement #2: 메인으로 가더라도 로그인 세션 유지되도록 조정
   const goBack = () => {
     if (navHistory.length <= 1) {
       setModeState('landing');
@@ -234,7 +252,6 @@ export const ClassProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
   };
 
-  // Google Login for Teachers - Strict Validation
   const loginAsTeacherGoogle = (email: string, name: string, schoolName: string, grade: number, classNum: number): TeacherUser => {
     const existing = teachers.find(t => t.email.toLowerCase() === email.toLowerCase());
 
@@ -279,6 +296,7 @@ export const ClassProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return newTeacher;
   };
 
+  // Requirement #2: Student login sorted by name & student number automatically re-assigned by name order
   const loginAsStudentWithCode = (grade: number, classNum: number, realName: string, inviteCode: string) => {
     const cleanCode = inviteCode.trim().toUpperCase();
     const targetClass = schoolClasses.find(c => c.inviteCode.toUpperCase() === cleanCode && c.grade === grade && c.classNum === classNum);
@@ -300,7 +318,7 @@ export const ClassProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return { success: true };
     }
 
-    const newStudent: Student = {
+    const newStudentRaw: Student = {
       id: `std-${Date.now()}`,
       name: realName.trim(),
       studentNumber: students.length + 1,
@@ -310,13 +328,16 @@ export const ClassProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       createdAt: getTodayYMD(),
     };
 
-    setStudents(prev => [...prev, newStudent]);
-    setSelectedStudentState(newStudent);
-    pushViewState({ mode: 'student', student: newStudent });
+    const updatedSortedList = sortStudentsByName([...students, newStudentRaw]);
+    setStudentsState(updatedSortedList);
+
+    const finalStudent = updatedSortedList.find(s => s.name === realName.trim()) || newStudentRaw;
+
+    setSelectedStudentState(finalStudent);
+    pushViewState({ mode: 'student', student: finalStudent });
     return { success: true };
   };
 
-  // Deletion Actions (Requirement #4: 학생들이 작성한 내용 각자 삭제)
   const deleteReadingLog = (logId: string) => {
     setReadingLogs(prev => prev.filter(l => l.id !== logId));
   };
@@ -493,11 +514,11 @@ export const ClassProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setTeacherNotes(prev => [newNote, ...prev]);
   };
 
-  const addStudent = (name: string, studentNumber: number, avatarEmoji: string, avatarBgColor: string, gender: 'M'|'F' = 'M', motto = '') => {
+  const addStudent = (name: string, _studentNumber: number, avatarEmoji: string, avatarBgColor: string, gender: 'M'|'F' = 'M', motto = '') => {
     const newStudent: Student = {
       id: `std-${Date.now()}`,
-      name,
-      studentNumber,
+      name: name.trim(),
+      studentNumber: 1,
       avatarEmoji,
       avatarBgColor,
       gender,
