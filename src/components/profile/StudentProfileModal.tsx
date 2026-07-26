@@ -50,6 +50,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({ studen
         exit={{ opacity: 0, scale: 0.95 }}
         className="bg-white rounded-3xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-amber-100 my-8"
       >
+        {/* Banner */}
         <div className="bg-gradient-to-r from-amber-100 via-orange-100 to-rose-100 p-6 sm:p-8 relative">
           <button
             onClick={onClose}
@@ -80,7 +81,9 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({ studen
           </div>
         </div>
 
+        {/* Modal Body */}
         <div className="p-6 overflow-y-auto space-y-6 flex-1">
+          {/* Quick Stats Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-amber-50/70 border border-amber-200/60 rounded-2xl p-3.5 text-center">
               <BookOpen className="w-5 h-5 text-amber-600 mx-auto mb-1" />
@@ -107,6 +110,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({ studen
             </div>
           </div>
 
+          {/* Badges Section */}
           <div className="bg-slate-50 border border-slate-200/70 rounded-2xl p-4 space-y-3">
             <div className="flex items-center gap-2">
               <Award className="w-5 h-5 text-amber-500" />
@@ -135,13 +139,14 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({ studen
             )}
           </div>
 
-          <div className="bg-purple-50/50 border border-purple-200/60 rounded-2xl p-4 space-y-3">
+          {/* Monthly Emotion Calendar Grid - Aesthetic Styling */}
+          <div className="bg-purple-50/50 border border-purple-200/60 rounded-3xl p-5 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-purple-600" />
-                <h3 className="font-bold text-purple-900 text-sm">월별 감정 달력</h3>
+                <h3 className="font-extrabold text-purple-950 text-base">월별 감정 달력</h3>
               </div>
-              <div className="flex items-center gap-2 text-xs font-bold text-purple-800">
+              <div className="flex items-center gap-2 text-xs font-extrabold text-purple-900">
                 <button
                   onClick={() => {
                     if (currentMonth === 1) {
@@ -151,11 +156,13 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({ studen
                       setCurrentMonth(m => m - 1);
                     }
                   }}
-                  className="px-2 py-1 bg-white hover:bg-purple-100 rounded-md border border-purple-200"
+                  className="px-2.5 py-1 bg-white hover:bg-purple-100 rounded-lg border border-purple-200 shadow-2xs"
                 >
                   &lt;
                 </button>
-                <span>{currentYear}년 {currentMonth}월</span>
+                <span className="bg-white px-3 py-1 rounded-lg border border-purple-200">
+                  {currentYear}년 {currentMonth}월
+                </span>
                 <button
                   onClick={() => {
                     if (currentMonth === 12) {
@@ -165,29 +172,30 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({ studen
                       setCurrentMonth(m => m + 1);
                     }
                   }}
-                  className="px-2 py-1 bg-white hover:bg-purple-100 rounded-md border border-purple-200"
+                  className="px-2.5 py-1 bg-white hover:bg-purple-100 rounded-lg border border-purple-200 shadow-2xs"
                 >
                   &gt;
                 </button>
               </div>
             </div>
 
-            <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-purple-700">
-              <div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div>
+            <div className="grid grid-cols-7 gap-1.5 text-center text-xs font-bold text-purple-800">
+              <div className="text-rose-500">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div className="text-sky-500">토</div>
             </div>
-            <div className="grid grid-cols-7 gap-1">
+
+            <div className="grid grid-cols-7 gap-1.5">
               {monthDays.map((day, idx) => {
-                if (!day) return <div key={idx} className="h-9"></div>;
+                if (!day) return <div key={idx} className="h-10"></div>;
                 const emo = getEmotionForDay(day);
                 return (
                   <div
                     key={idx}
-                    className="h-9 rounded-lg border border-purple-100 bg-white flex flex-col items-center justify-center relative hover:scale-105 transition-transform"
+                    className="h-11 rounded-xl border border-purple-200/80 bg-white flex flex-col items-center justify-center relative hover:scale-105 transition-transform shadow-2xs group"
                     title={emo ? `${day}일: ${emo.label}` : `${day}일`}
                   >
-                    <span className="text-[9px] text-slate-400 absolute top-0.5 left-1">{day}</span>
+                    <span className="text-[9px] font-bold text-slate-400 absolute top-0.5 left-1.5">{day}</span>
                     {emo ? (
-                      <span className="text-base leading-none mt-1">{emo.emoji}</span>
+                      <span className="text-xl leading-none mt-1">{emo.emoji}</span>
                     ) : (
                       <span className="w-1.5 h-1.5 rounded-full bg-slate-200 mt-2"></span>
                     )}
@@ -197,6 +205,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({ studen
             </div>
           </div>
 
+          {/* Received Praise Section */}
           <div className="bg-rose-50/50 border border-rose-200/60 rounded-2xl p-4 space-y-3">
             <div className="flex items-center gap-2">
               <Heart className="w-5 h-5 text-rose-500" />
@@ -219,6 +228,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({ studen
             )}
           </div>
 
+          {/* Private Teacher Notes */}
           {mode === 'teacher' && (
             <div className="bg-slate-900 text-slate-100 rounded-2xl p-4 space-y-3 shadow-inner border border-slate-700">
               <div className="flex items-center justify-between">
