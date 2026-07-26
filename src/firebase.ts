@@ -33,32 +33,37 @@ export const db = getFirestore(app);
 export const isFirebaseConfigured = Boolean(import.meta.env.VITE_FIREBASE_API_KEY || firebaseConfig.apiKey);
 
 /**
- * Handle Google Auth with Automatic Popup -> Redirect Fallback for Mobile Devices
+ * Trigger Google Sign-In with exact error code reporting
  */
 export async function signInWithGoogle() {
   try {
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
   } catch (error: any) {
-    console.warn('signInWithPopup failed, attempting signInWithRedirect fallback:', error);
-    if (error?.code === 'auth/popup-closed-by-user') {
-      throw new Error('구글 로그인 창이 닫혔습니다. 다시 시도해 주세요.');
+    console.error('Firebase Google Auth error detail:', error);
+    const errCode = error?.code || 'auth/unknown';
+    const errDesc = error?.message || '';
+
+    if (errCode === 'auth/popup-closed-by-user') {
+      throw new Error('구글 로그인 팝업 창이 닫혔습니다. 다시 구글 로그인 버튼을 눌러주세요.');
     }
-    
-    // Attempt redirect method for mobile browsers where popups are blocked
+    if (errCode === 'auth/unauthorized-domain') {
+      throw new Error(`[도메인 승인 오류: ${errCode}]\nFirebase 콘솔 -> Authentication -> Settings -> Authorized domains 메뉴에 현재 접속하신 주소(vercel.app)를 [Add domain] 하셔야 합니다.`);
+    }
+    if (errCode === 'auth/operation-not-allowed') {
+      throw new Error(`[구글 인증 비활성화 오류: ${errCode}]\nFirebase 콘솔 -> Authentication -> Sign-in method 메뉴에서 [Google] 제공업체를 [사용 설정] 저장하셔야 합니다.`);
+    }
+
+    // Try redirect fallback if popup blocked
     try {
       await signInWithRedirect(auth, googleProvider);
       return null;
     } catch (redirectErr: any) {
-      console.error('signInWithRedirect error:', redirectErr);
-      throw new Error(`구글 인증 오류 (${redirectErr?.code || '오류'}): ${redirectErr?.message || '인증 실패'}`);
+      throw new Error(`[구글 인증 오류코드: ${redirectErr?.code || errCode}]\n${redirectErr?.message || errDesc}`);
     }
   }
 }
 
-/**
- * Check if returning from Google Auth Redirect
- */
 export async function checkGoogleRedirectResult() {
   try {
     const result = await getRedirectResult(auth);
