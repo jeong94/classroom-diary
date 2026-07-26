@@ -22,18 +22,31 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 export const auth = getAuth(app);
+
 export const googleProvider = new GoogleAuthProvider();
+// Force Google to always open the Account Selector popup window!
+googleProvider.setCustomParameters({ prompt: 'select_account' });
+
 export const db = getFirestore(app);
 
 export const isFirebaseConfigured = Boolean(import.meta.env.VITE_FIREBASE_API_KEY);
 
+/**
+ * Trigger Real Google Sign-In Account Selector Popup
+ */
 export async function signInWithGoogle() {
   try {
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
-  } catch (error) {
-    console.warn('Firebase Google Auth popup failed or in demo mode:', error);
-    return null;
+  } catch (error: any) {
+    console.error('Firebase Google Auth error:', error);
+    if (error?.code === 'auth/popup-closed-by-user') {
+      throw new Error('구글 로그인 창이 닫혔습니다. 다시 구글 계정을 선택해주세요.');
+    }
+    if (error?.code === 'auth/popup-blocked') {
+      throw new Error('브라우저의 팝업 차단이 활성화되어 있습니다. 팝업 차단을 해제하고 다시 시도해주세요.');
+    }
+    throw error;
   }
 }
 
@@ -42,7 +55,7 @@ export async function signInAnonymousStudent() {
     const result = await signInAnonymously(auth);
     return result.user;
   } catch (error) {
-    console.warn('Firebase Anonymous Auth failed or in demo mode:', error);
+    console.warn('Firebase Anonymous Auth failed:', error);
     return null;
   }
 }
