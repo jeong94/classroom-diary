@@ -4,25 +4,12 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   signInAnonymously,
-  signOut as firebaseSignOut,
-  onAuthStateChanged,
-  User as FirebaseUser
+  signOut as firebaseSignOut
 } from 'firebase/auth';
 import {
-  getFirestore,
-  collection,
-  doc,
-  setDoc,
-  getDoc,
-  getDocs,
-  query,
-  where,
-  onSnapshot,
-  addDoc,
-  updateDoc
+  getFirestore
 } from 'firebase/firestore';
 
-// Firebase configuration from environment variables or demo fallback
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDemoPlaceholderKeyForDevelopment1234",
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "classroom-diary-demo.firebaseapp.com",
@@ -32,19 +19,14 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:1234567890:web:abcdef123456"
 };
 
-// Initialize Firebase App singleton
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 export const db = getFirestore(app);
 
-// Check if real Firebase env vars are present
 export const isFirebaseConfigured = Boolean(import.meta.env.VITE_FIREBASE_API_KEY);
 
-/**
- * Sign in with Google (For Teachers / Super Admin)
- */
 export async function signInWithGoogle() {
   try {
     const result = await signInWithPopup(auth, googleProvider);
@@ -55,9 +37,6 @@ export async function signInWithGoogle() {
   }
 }
 
-/**
- * Sign in anonymously (For Students entering via Invite Code & Real Name)
- */
 export async function signInAnonymousStudent() {
   try {
     const result = await signInAnonymously(auth);
@@ -68,9 +47,6 @@ export async function signInAnonymousStudent() {
   }
 }
 
-/**
- * Sign out
- */
 export async function logoutFirebase() {
   try {
     await firebaseSignOut(auth);
