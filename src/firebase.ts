@@ -3,6 +3,8 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signInAnonymously,
   signOut as firebaseSignOut
 } from 'firebase/auth';
@@ -10,7 +12,6 @@ import {
   getFirestore
 } from 'firebase/firestore';
 
-// Embedded default Firebase configuration to prevent white-screen boot crashes
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDYlMozdTERryEtFee6ivtvNh-7o5gsO0I",
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "classroom-diary-3d1ec.firebaseapp.com",
@@ -32,24 +33,42 @@ export const db = getFirestore(app);
 export const isFirebaseConfigured = Boolean(import.meta.env.VITE_FIREBASE_API_KEY || firebaseConfig.apiKey);
 
 /**
- * Trigger Real Google Sign-In Account Selector Popup
+ * Handle Google Auth with Automatic Popup -> Redirect Fallback for Mobile Devices
  */
 export async function signInWithGoogle() {
   try {
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
   } catch (error: any) {
-    console.error('Firebase Google Auth error:', error);
+    console.warn('signInWithPopup failed, attempting signInWithRedirect fallback:', error);
     if (error?.code === 'auth/popup-closed-by-user') {
-      throw new Error('구글 로그인 창이 닫혔습니다. 다시 구글 로그인 버튼을 눌러 계정을 선택해 주세요.');
+      throw new Error('구글 로그인 창이 닫혔습니다. 다시 시도해 주세요.');
     }
-    if (error?.code === 'auth/popup-blocked') {
-      throw new Error('브라우저의 팝업 차단이 설정되어 있습니다. 팝업 허용 후 다시 시도해 주세요.');
+    
+    // Attempt redirect method for mobile browsers where popups are blocked
+    try {
+      await signInWithRedirect(auth, googleProvider);
+      return null;
+    } catch (redirectErr: any) {
+      console.error('signInWithRedirect error:', redirectErr);
+      throw new Error(`구글 인증 오류 (${redirectErr?.code || '오류'}): ${redirectErr?.message || '인증 실패'}`);
     }
-    if (error?.code === 'auth/unauthorized-domain') {
-      throw new Error('Firebase 콘솔 [Authentication -> Settings -> Authorized domains]에 Vercel 주소를 추가하셔야 합니다.');
+  }
+}
+
+/**
+ * Check if returning from Google Auth Redirect
+ */
+export async function checkGoogleRedirectResult() {
+  try {
+    const result = await getRedirectResult(auth);
+    if (result && result.user) {
+      return result.user;
     }
-    throw new Error(`구글 인증 오류 (${error?.code || '오류'}): ${error?.message || '인증 실패'}`);
+    return null;
+  } catch (e) {
+    console.error('getRedirectResult error:', e);
+    return null;
   }
 }
 

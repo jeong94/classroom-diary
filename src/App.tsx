@@ -1,12 +1,28 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ClassProvider, useClass } from './context/ClassContext';
 import { Header } from './components/common/Header';
 import { LandingPage } from './pages/LandingPage';
 import { StudentPage } from './pages/StudentPage';
 import { TeacherPage } from './pages/TeacherPage';
+import { checkGoogleRedirectResult } from './firebase';
 
 const MainContent: React.FC = () => {
-  const { mode, selectedStudent } = useClass();
+  const { mode, selectedStudent, loginAsTeacherGoogle } = useClass();
+
+  useEffect(() => {
+    // Check if returning from Google Auth Redirect (for Mobile devices)
+    checkGoogleRedirectResult().then(user => {
+      if (user && user.email) {
+        loginAsTeacherGoogle(
+          user.email,
+          user.displayName || '선생님',
+          '서울초등학교',
+          6,
+          1
+        );
+      }
+    });
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FFFBF7]">
