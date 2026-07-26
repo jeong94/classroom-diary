@@ -11,12 +11,12 @@ import {
 } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDemoPlaceholderKeyForDevelopment1234",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "classroom-diary-demo.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "classroom-diary-demo",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "classroom-diary-demo.appspot.com",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "1234567890",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:1234567890:web:abcdef123456"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || ""
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
@@ -24,7 +24,6 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
 
 export const googleProvider = new GoogleAuthProvider();
-// Force Google to always open the Account Selector popup window!
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 export const db = getFirestore(app);
@@ -41,12 +40,15 @@ export async function signInWithGoogle() {
   } catch (error: any) {
     console.error('Firebase Google Auth error:', error);
     if (error?.code === 'auth/popup-closed-by-user') {
-      throw new Error('구글 로그인 창이 닫혔습니다. 다시 구글 계정을 선택해주세요.');
+      throw new Error('구글 로그인 창이 닫혔습니다. 다시 구글 로그인 버튼을 눌러 계정을 선택해 주세요.');
     }
     if (error?.code === 'auth/popup-blocked') {
-      throw new Error('브라우저의 팝업 차단이 활성화되어 있습니다. 팝업 차단을 해제하고 다시 시도해주세요.');
+      throw new Error('브라우저의 팝업 차단이 설정되어 있습니다. 팝업 허용 후 다시 시도해 주세요.');
     }
-    throw error;
+    if (error?.code === 'auth/unauthorized-domain') {
+      throw new Error('Firebase 콘솔 [Authentication -> Settings -> Authorized domains]에 Vercel 주소를 추가하셔야 합니다.');
+    }
+    throw new Error(`구글 인증 오류 (${error?.code || '오류'}): ${error?.message || '인증 실패'}`);
   }
 }
 
